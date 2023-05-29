@@ -11,9 +11,9 @@ library(here)
 
 # Read data from RDS files
 
-biochem_data <- readRDS(here("biochem.rds"))
-olink_data <- readRDS(here("olink.rds"))
-hep_data<- readRDS(here("hep.rds"))
+biochem_data <- readRDS(here("data/biochem.rds"))
+olink_data <- readRDS(here("data/olink.rds"))
+hep_data<- readRDS(here("data/hep.rds"))
 
 biochem_data$timepoint<-as.factor(biochem_data$timepoint)
 olink_data$timepoint<-as.factor(olink_data$timepoint)

@@ -43,7 +43,7 @@ olink_data <- data.frame(
       marker4_belowLOD = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE)
 )
 
-saveRDS(olink_data,here("olink.rds"))
+saveRDS(olink_data,here("data/olink.rds"))
 
 
 # Biochem
@@ -61,7 +61,7 @@ biochem <- data.frame(
   hep_biochem = sample(c(sample(68:400, num_samples - num_nas, replace = TRUE), rep(NA, num_nas)))
 )
 
-saveRDS(biochem,here("biochem.rds"))
+saveRDS(biochem,here("data/biochem.rds"))
 
 
 hep <- data.frame(
@@ -73,7 +73,7 @@ hep <- data.frame(
   other_variable2 = sample(200:400, length(sample_ids) * num_timepoints, replace = TRUE)
 )
 
-saveRDS(hep,here("hep.rds"))
+saveRDS(hep,here("data/hep.rds"))
 
 
 stfr <- data.frame(
@@ -85,7 +85,7 @@ stfr <- data.frame(
   other_variables_again = sample(880:4400, length(sample_ids) * num_timepoints, replace = TRUE)
 )
 
-saveRDS(stfr,here("stfr.rds"))
+saveRDS(stfr,here("data/stfr.rds"))
 
 
 
