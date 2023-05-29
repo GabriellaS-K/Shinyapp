@@ -15,13 +15,20 @@ biochem_data <- readRDS(here("data/biochem.rds"))
 olink_data <- readRDS(here("data/olink.rds"))
 hep_data<- readRDS(here("data/hep.rds"))
 
+# Make sure timepoint is a factor
 biochem_data$timepoint<-as.factor(biochem_data$timepoint)
 olink_data$timepoint<-as.factor(olink_data$timepoint)
 hep_data$timepoint<-as.factor(hep_data$timepoint)
 
+# Extracting unique marker names from column names in biochem_data that end with "_biochem"
 markers_biochem <- unique(gsub("_biochem$", "", names(biochem_data)[grepl("_biochem$", names(biochem_data))]))
+
+# Extracting unique marker names from column names in olink_data that end with "_log10"
 markers_olink_log10 <- unique(gsub("_log10$", "", names(olink_data)[grepl("_log10$", names(olink_data))]))
+
+# Extracting unique marker names from column names in hep_data that end with "_hep"
 markers_hep <- unique(gsub("_hep$", "", names(hep_data)[grepl("_hep$", names(hep_data))]))
+
 
 ######################################### UI #############################################
 ui <- fluidPage(
@@ -213,6 +220,7 @@ server <- function(input, output) {
   })
   
 }
+######################################### Run the app! #############################################
 
 
 shinyApp(ui = ui, server = server)
