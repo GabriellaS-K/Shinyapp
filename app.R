@@ -70,156 +70,107 @@ ui <- fluidPage(
 )
 ######################################### SERVER #############################################
 server <- function(input, output) {
-  
-  output$olink_boxplot <- renderPlot({
-    selected_marker <- input$olink_select  # Get the selected marker from the first selectInput
-    column_name <- paste0(selected_marker, "_log10")  # Create the column name by appending "_log10" to the selected marker
+  # Function to select and filter data and run an ANOVA
+  compute_model <- function(df, column_name) {
     
-    if (!column_name %in% names(olink_data)) {  # Check if the column exists in the olink_data
-      message("Column '", column_name, "' doesn't exist in olink data.")
-      return(NULL)
-    }
-    
-    olink_plot_data <- olink_data %>%
+    filtered_df <- df %>%
       select(timepoint, ID, !!sym(column_name)) %>%
       filter(!is.na(.[[column_name]]) & is.finite(.[[column_name]]))  # Filter the data, removing rows with NA or infinite values
     
     # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(column_name, "~ timepoint + (1 | ID)")), data = olink_plot_data)
+    lmer_model <- lmer(formula = as.formula(paste(column_name, "~ timepoint + (1 | ID)")), data = filtered_df)
     anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 3)  # Format the p-value
+    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 5)  # Format the p-value
     p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
     
-    # Create the boxplot object using ggplot
-    olink_plot_object <- ggplot(data = olink_plot_data, aes(x = timepoint, y = .data[[column_name]], color = timepoint)) +
-      geom_boxplot() +
-      labs(x = "timepoint", y = selected_marker) +
-      theme_classic()
+    textual_result <- paste("Repeated Measures ANOVA p-value:", p_value_display)
     
-    print(olink_plot_object)  # Print the boxplot object
-  })
+    ## this put all the things in a list in case you might need it,
+    # but if you only need the textual label, you can simply
+    # return textual_result
+    results <- list(
+      lmer_model = lmer_model,
+      anova_result = anova_result,
+      p_value = p_value,
+      p_value_display = p_value_display,
+      textual_result = textual_result
+    )
+    
+    return(results)
+    
+  }
   
+  # Run the function on Olink data
   output$olink_anova_result <- renderText({
-    selected_marker <- input$olink_select  # Get the selected marker from the first selectInput
-    column_name <- paste0(selected_marker, "_log10")  # Create the column name by appending "_log10" to the selected marker
+    selected_marker <- input$olink_select
+    selected_column_name <- paste0(selected_marker, "_log10")
+    model_stuff <- compute_model(olink_data, column_name = selected_column_name)
+    return(model_stuff$textual_result)
     
-    if (!column_name %in% names(olink_data)) {  # Check if the column exists in the olink_data
-      message("Column '", column_name, "' doesn't exist in olink.")
-      return(NULL)
-    }
-    
-    olink_plot_data <- olink_data %>%
-      select(timepoint, ID, !!sym(column_name)) %>%
-      filter(!is.na(.[[column_name]]) & is.finite(.[[column_name]]))  # Filter the data, removing rows with NA or infinite values
-    
-    # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(column_name, "~ timepoint + (1 | ID)")), data = olink_plot_data)
-    anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 5)  # Format the p-value
-    p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
-    
-    paste("Repeated Measures ANOVA p-value:", p_value_display)  # Return the ANOVA p-value as text
-  })
+    })
   
-  output$biochem_boxplot <- renderPlot({
-    selected_column <- paste0(input$biochem_select, "_biochem")  # Get the selected column from the second selectInput
-    
-    if (!selected_column %in% colnames(biochem_data)) {  # Check if the column exists in the biochem_data
-      message("Column '", selected_column, "' doesn't exist in the Biochem Data.")
-      return(NULL)
-    }
-    
-    biochem_plot_data <- biochem_data %>%
-      select(timepoint, ID, !!sym(selected_column)) %>%
-      filter(!is.na(.[[selected_column]]) & is.finite(.[[selected_column]]))  # Filter the data, removing rows with NA or infinite values
-    
-    # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(selected_column, "~ timepoint + (1 | ID)")), data = biochem_plot_data)
-    anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 3)  # Format the p-value
-    p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
-    
-    # Create the boxplot object using ggplot
-    biochem_plot_object <- ggplot(data = biochem_plot_data, aes(x = timepoint, y = .data[[selected_column]], color = timepoint)) +
-      geom_boxplot() +
-      labs(x = "timepoint", y = selected_column) +
-      theme_classic()
-    
-    print(biochem_plot_object)  # Print the boxplot object
-  })
-  
+  # Run the function on Biochem data
   output$biochem_anova_result <- renderText({
-    selected_column <- paste0(input$biochem_select, "_biochem")  # Get the selected column from the second selectInput
+    selected_marker <- input$biochem_select
+    selected_column_name <- paste0(selected_marker, "_biochem")
+    model_stuff <- compute_model(biochem_data, column_name = selected_column_name)
+    return(model_stuff$textual_result)
     
-    if (!selected_column %in% colnames(biochem_data)) {  # Check if the column exists in the biochem_data
-      message("Column '", selected_column, "' doesn't exist in the Biochem Data.")
-      return(NULL)
-    }
-    
-    biochem_plot_data <- biochem_data %>%
-      select(timepoint, ID, !!sym(selected_column)) %>%
-      filter(!is.na(.[[selected_column]]) & is.finite(.[[selected_column]]))  # Filter the data, removing rows with NA or infinite values
-    
-    # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(selected_column, "~ timepoint + (1 | ID)")), data = biochem_plot_data)
-    anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 5)  # Format the p-value
-    p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
-    
-    paste("Repeated Measures ANOVA p-value for Biochem Data:", p_value_display)  # Return the ANOVA p-value as text
-  })
+  })  
   
-  output$hep_boxplot <- renderPlot({
-    selected_marker <- input$hepcidin_select  # Get the selected marker from the third selectInput
-    column_name <- paste0(selected_marker, "_hep")  # Create the column name by appending "_hep" to the selected marker
-    
-    if (!column_name %in% names(hep_data)) {  # Check if the column exists in the hep_data
-      message("Column '", column_name, "' doesn't exist in hep data.")
-      return(NULL)
-    }
-    
-    hep_plot_data <- hep_data %>%
-      select(timepoint, ID, !!sym(column_name)) %>%
-      filter(!is.na(.[[column_name]]) & is.finite(.[[column_name]]))  # Filter the data, removing rows with NA or infinite values
-    
-    # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(column_name, "~ timepoint + (1 | ID)")), data = hep_plot_data)
-    anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 3)  # Format the p-value
-    p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
-    
-    # Create the boxplot object using ggplot
-    hep_plot_object <- ggplot(data = hep_plot_data, aes(x = timepoint, y = .data[[column_name]], color = timepoint)) +
-      geom_boxplot() +
-      labs(x = "timepoint", y = selected_marker) +
-      theme_classic()
-    
-    print(hep_plot_object)  # Print the boxplot object
-  })
   
+  # Run the function on hep data
   output$hep_anova_result <- renderText({
-    selected_marker <- input$hepcidin_select  # Get the selected marker from the third selectInput
-    column_name <- paste0(selected_marker, "_hep")  # Create the column name by appending "_hep" to the selected marker
+    selected_marker <- input$hepcidin_select
+    selected_column_name <- paste0(selected_marker, "_hep")
+    model_stuff <- compute_model(hep_data, column_name = selected_column_name)
+    return(model_stuff$textual_result)
     
-    if (!column_name %in% names(hep_data)) {  # Check if the column exists in the hep_data
-      message("Column '", column_name, "' doesn't exist in hep.")
-      return(NULL)
-    }
+  })  
+  
+  
+  # Function to make boxplot
+  
+  plot_boxplot <- function(df, column_name) {
     
-    hep_plot_data <- hep_data %>%
-      select(timepoint, ID, !!sym(column_name)) %>%
-      filter(!is.na(.[[column_name]]) & is.finite(.[[column_name]]))  # Filter the data, removing rows with NA or infinite values
-    
-    # Perform linear mixed-effects regression and calculate ANOVA
-    lmer_model <- lmer(formula = as.formula(paste(column_name, "~ timepoint + (1 | ID)")), data = hep_plot_data)
-    anova_result <- anova(lmer_model, type = "III")
-    p_value <- formatC(anova_result[["Pr(>F)"]][1], format = "f", digits = 5)  # Format the p-value
-    p_value_display <- ifelse(as.numeric(p_value) < 0.05, paste0(p_value, "*"), p_value)  # Add asterisk if p-value is significant
-    
-    paste("Repeated Measures ANOVA p-value:", p_value_display)  # Return the ANOVA p-value as text
+    ggplot(data = df, aes(x = timepoint, y = .data[[column_name]], color = timepoint)) +
+      geom_boxplot() +
+      labs(x = "timepoint", y = column_name) +
+      theme_classic()
+  }
+  
+  # Run boxplot function on olink
+  output$olink_boxplot <- renderPlot({
+    selected_marker <- input$olink_select
+    selected_column_name <- paste0(selected_marker, "_log10")
+    plot_stuff <- plot_boxplot(olink_data, column_name = selected_column_name)
+      print(plot_stuff) 
+  })
+  
+  # Run boxplot function on biochem
+  output$biochem_boxplot <- renderPlot({
+    selected_marker <- input$biochem_select
+    selected_column_name <- paste0(selected_marker, "_biochem")
+    plot_stuff <- plot_boxplot(biochem_data, column_name = selected_column_name)
+    print(plot_stuff) 
+  })
+  
+  # Run boxplot function on olink
+  output$hep_boxplot <- renderPlot({
+    selected_marker <- input$hepcidin_select
+    selected_column_name <- paste0(selected_marker, "_hep")
+    plot_stuff <- plot_boxplot(hep_data, column_name = selected_column_name)
+    print(plot_stuff) 
   })
   
 }
+
+  
+
+### function 1###
+
+  
+
 ######################################### Run the app! #############################################
 
 
