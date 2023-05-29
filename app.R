@@ -14,11 +14,13 @@ library(here)
 biochem_data <- readRDS(here("data/biochem.rds"))
 olink_data <- readRDS(here("data/olink.rds"))
 hep_data<- readRDS(here("data/hep.rds"))
+stfr_data<- readRDS(here("data/stfr.rds"))
 
 # Make sure timepoint is a factor
 biochem_data$timepoint<-as.factor(biochem_data$timepoint)
 olink_data$timepoint<-as.factor(olink_data$timepoint)
 hep_data$timepoint<-as.factor(hep_data$timepoint)
+stfr_data$timepoint<-as.factor(stfr_data$timepoint)
 
 # Extracting unique marker names from column names in biochem_data that end with "_biochem"
 markers_biochem <- unique(gsub("_biochem$", "", names(biochem_data)[grepl("_biochem$", names(biochem_data))]))
@@ -28,6 +30,9 @@ markers_olink_log10 <- unique(gsub("_log10$", "", names(olink_data)[grepl("_log1
 
 # Extracting unique marker names from column names in hep_data that end with "_hep"
 markers_hep <- unique(gsub("_hep$", "", names(hep_data)[grepl("_hep$", names(hep_data))]))
+
+# Extracting unique marker names from column names in stfr_data that end with "_stfr"
+markers_stfr <- unique(gsub("_stfr$", "", names(stfr_data)[grepl("_stfr$", names(stfr_data))]))
 
 
 ######################################### UI #############################################
@@ -55,6 +60,12 @@ ui <- fluidPage(
         choices = markers_hep,  # Choices for the third selectInput
         selected = NULL  # Initial selected value for the third selectInput
       ),
+      selectInput(
+        inputId = "stfr_select",  # ID of the 4th selectInput
+        label = "Select a stfr column:",  # Label for the 4th selectInput
+        choices = markers_stfr,  # Choices for the 4th selectInput
+        selected = NULL  # Initial selected value for the 4th selectInput
+      ),
       width = 3 #Width of the sidebar panel
     ),
     
@@ -64,7 +75,9 @@ ui <- fluidPage(
       plotOutput(outputId = "biochem_boxplot"),  # Output for the biochem boxplot plot
       textOutput(outputId = "biochem_anova_result"),  # Output for the biochem ANOVA result
       plotOutput(outputId = "hep_boxplot"),  # Output for the hepcidin boxplot plot
-      textOutput(outputId = "hep_anova_result")  # Output for the hepcidin ANOVA result
+      textOutput(outputId = "hep_anova_result"),  # Output for the hepcidin ANOVA result
+      plotOutput(outputId = "stfr_boxplot"),  # Output for the stfr boxplot plot
+      textOutput(outputId = "stfr_anova_result")  # Output for the stfr ANOVA result
     )
   )
 )
@@ -128,6 +141,14 @@ server <- function(input, output) {
     
   })  
   
+  # Run the function on hep data
+  output$stfr_anova_result <- renderText({
+    selected_marker <- input$stfr_select
+    selected_column_name <- paste0(selected_marker, "_stfr")
+    model_stuff <- compute_model(stfr_data, column_name = selected_column_name)
+    return(model_stuff$textual_result)
+    
+  })  
   
   # Function to make boxplot
   
@@ -155,11 +176,19 @@ server <- function(input, output) {
     print(plot_stuff) 
   })
   
-  # Run boxplot function on olink
+  # Run boxplot function on hep
   output$hep_boxplot <- renderPlot({
     selected_marker <- input$hepcidin_select
     selected_column_name <- paste0(selected_marker, "_hep")
     plot_stuff <- plot_boxplot(hep_data, column_name = selected_column_name)
+    print(plot_stuff) 
+  })
+  
+  # Run boxplot function on stfr
+  output$stfr_boxplot <- renderPlot({
+    selected_marker <- input$stfr_select
+    selected_column_name <- paste0(selected_marker, "_stfr")
+    plot_stuff <- plot_boxplot(stfr_data, column_name = selected_column_name)
     print(plot_stuff) 
   })
   

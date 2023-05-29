@@ -80,7 +80,7 @@ stfr <- data.frame(
   ID = rep(sample_ids, each = num_timepoints),
   timepoint = timepoints,
   final_stfr = sample(30:340, length(sample_ids) * num_timepoints, replace = TRUE),
-  adjusted_strf = sample(60:345, length(sample_ids) * num_timepoints, replace = TRUE),
+  adjusted_stfr = sample(60:345, length(sample_ids) * num_timepoints, replace = TRUE),
     other_vars = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE),
   other_variables_again = sample(880:4400, length(sample_ids) * num_timepoints, replace = TRUE)
 )
