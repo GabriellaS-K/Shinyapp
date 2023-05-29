@@ -1,0 +1,93 @@
+---
+title: "Making Data"
+author: "Gabriella"
+date: "2023-05-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(here)
+```
+
+First step is to make some sample data
+I have three datasets: olink, bio, hepcidin. 
+
+```{r inflammation}
+num_ids <- 50
+num_timepoints <- 4
+
+timepoints <- rep(1:num_timepoints, length.out = num_ids * num_timepoints)
+
+# Set the seed value
+set.seed(123)
+
+# Generate a random set of IDs with a specific pattern
+sample_ids <- paste0("ID", sprintf("%03d", sample(1:100, num_ids, replace = FALSE)))
+
+olink_data <- data.frame(
+  ID = rep(sample_ids, each = num_timepoints),
+  timepoint = timepoints,
+  marker2_raw = sample(50:5000, length(sample_ids) * num_timepoints, replace = TRUE),
+  marker2_log10 = sample(1:100, length(sample_ids) * num_timepoints, replace = TRUE),
+    marker2_belowLOD = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE),
+  other_variable = sample(60:90, length(sample_ids) * num_timepoints, replace = TRUE),
+    marker3_raw = sample(50:5000, length(sample_ids) * num_timepoints, replace = TRUE),
+  marker3_log10 = sample(68:400, length(sample_ids) * num_timepoints, replace = TRUE),
+      marker3_belowLOD = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE),
+    marker4_raw = sample(90:4000, length(sample_ids) * num_timepoints, replace = TRUE),
+  marker4_log10 = sample(200:400, length(sample_ids) * num_timepoints, replace = TRUE),
+      marker4_belowLOD = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE)
+)
+
+saveRDS(olink_data,here("olink.rds"))
+
+
+# Biochem
+
+num_samples <- length(sample_ids) * num_timepoints
+num_nas <- 2  # Number of NA values to add
+
+biochem <- data.frame(
+  ID = rep(sample_ids, each = num_timepoints),
+  timepoint = timepoints,
+  zinc_biochem = sample(c(sample(50:5000, num_samples - num_nas, replace = TRUE), rep(NA, num_nas))),
+  CRP_biochem = sample(c(sample(1:100, num_samples - num_nas, replace = TRUE), rep(NA, num_nas))),
+  other_variable = sample(c(sample(60:90, num_samples - num_nas, replace = TRUE), rep(NA, num_nas))),
+  trsat_biochem = sample(c(sample(50:5000, num_samples - num_nas, replace = TRUE), rep(NA, num_nas))),
+  hep_biochem = sample(c(sample(68:400, num_samples - num_nas, replace = TRUE), rep(NA, num_nas)))
+)
+
+saveRDS(biochem,here("biochem.rds"))
+
+
+hep <- data.frame(
+  ID = rep(sample_ids, each = num_timepoints),
+  timepoint = timepoints,
+  hepfinal_hep = sample(530:8000, length(sample_ids) * num_timepoints, replace = TRUE),
+  adjusted_hep = sample(1:60, length(sample_ids) * num_timepoints, replace = TRUE),
+    other_var = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE),
+  other_variable2 = sample(200:400, length(sample_ids) * num_timepoints, replace = TRUE)
+)
+
+saveRDS(hep,here("hep.rds"))
+
+
+stfr <- data.frame(
+  ID = rep(sample_ids, each = num_timepoints),
+  timepoint = timepoints,
+  final_stfr = sample(30:340, length(sample_ids) * num_timepoints, replace = TRUE),
+  adjusted_strf = sample(60:345, length(sample_ids) * num_timepoints, replace = TRUE),
+    other_vars = sample(c(TRUE, FALSE), length(sample_ids) * num_timepoints, replace = TRUE),
+  other_variables_again = sample(880:4400, length(sample_ids) * num_timepoints, replace = TRUE)
+)
+
+saveRDS(stfr,here("stfr.rds"))
+
+
+
+```
+
