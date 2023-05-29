@@ -1,2 +1,2 @@
 # Shinyapp
- My App
+ my app
